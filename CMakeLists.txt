@@ -1,12 +1,11 @@
 cmake_minimum_required(VERSION 3.5)
 project(fifa14_redirect_plugin)
 
-# AMEND: Pull in the official toolchain macros so CMake knows what "vita_create_self" is
+# Essential Vita SDK environment macros
 include("${VITASDK}/share/vita.cmake" REQUIRED)
 
 set(VITA_MODULE_NAME "fifa14_redirect")
 
-# Tell the compiler to treat this as a library module
 add_library(${PROJECT_NAME} SHARED main.c)
 
 target_link_libraries(${PROJECT_NAME} taihen SceNet_stub SceNetCtl_stub)
