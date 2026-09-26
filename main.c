@@ -18,21 +18,14 @@
  * Configuration
  * ------------------------------------------------------------------------ */
 
-/* Your PC's LAN IP address, running backend/proxy_server.py */
 #define PROXY_IP   "192.168.1.102"
-
-/* Must match PROXY_TCP_PORT in your proxy configuration (default 9000) */
 #define PROXY_PORT 9000
 
-/*
- * Legacy EA server IP prefixes.
- * Intercepts all traffic routed to EA's global infrastructure blocks.
- */
 static const char *g_legacy_ea_ips[] = {
-    "159.153.",     /* Main EA global server block (Blaze/Matchmaking) */
+    "159.153.",     /* Main EA global server block */
     "159.253.",     /* Secondary EA infrastructure block */
-    "20.50.",       /* Legacy EA Origin / Account authentication services */
-    NULL            /* Sentinel - marks the end of the list */
+    "20.50.",       /* Legacy EA Origin endpoints */
+    NULL            /* Sentinel */
 };
 
 /* ------------------------------------------------------------------------
@@ -40,10 +33,6 @@ static const char *g_legacy_ea_ips[] = {
  * ------------------------------------------------------------------------ */
 
 #define HOOKS_NUM 1
-
-/*
- * Verified NID for sceNetConnect on standard 3.65 VitaSDK builds.
- */
 #define SCE_NET_CONNECT_NID 0x7A4C6262
 
 static tai_hook_ref_t g_hook_refs[HOOKS_NUM];
@@ -89,6 +78,7 @@ static int sceNetConnect_patched(int s, SceNetSockaddr *addr, unsigned int addrl
         }
     }
 
+    /* Use explicit typecasting within the macro to resolve compiler architecture confusion */
     return TAI_CONTINUE(int, g_hook_refs[0], s, addr, addrlen);
 }
 
@@ -130,8 +120,6 @@ int module_start(SceSize argc, const void *args) {
 
     sceClibPrintf("[FIFA14Redirect] Plugin starting...\n");
     install_hooks();
-    sceClibPrintf("[FIFA14Redirect] Plugin ready. Proxy target: %s:%u\n", PROXY_IP, (unsigned)PROXY_PORT);
-
     return SCE_KERNEL_START_SUCCESS;
 }
 
@@ -140,12 +128,5 @@ int module_stop(SceSize argc, const void *args) {
     (void)args;
 
     remove_hooks();
-    sceClibPrintf("[FIFA14Redirect] Plugin stopped.\n");
-
     return SCE_KERNEL_STOP_SUCCESS;
-}
-
-/* Dummy main wrapper for basic toolchain targets */
-int main(void) {
-    return 0;
 }
