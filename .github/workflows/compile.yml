@@ -13,7 +13,7 @@ jobs:
 
       - name: Inject taiHEN Headers and Libraries
         run: |
-          git clone https://github.com /tmp/taihen
+          git clone https://github.com/tmp/taihen
           cp -r /tmp/taihen/libtaihen/include/* /usr/local/vitasdk/arm-vita-eabi/include/
           cp /tmp/taihen/libtaihen/libtaihen_stub.a /usr/local/vitasdk/arm-vita-eabi/lib/libtaihen.a
 
