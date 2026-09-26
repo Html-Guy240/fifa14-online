@@ -12,7 +12,7 @@
 #include <string.h>
 #include <stdio.h>
 
-/* AMENDED: Your PC's current static LAN IP address */
+/* Your PC's current static LAN IP address */
 #define PROXY_IP   "192.168.1.7"
 #define PROXY_PORT 9000
 #define SCE_NET_CONNECT_NID 0x7A4C6262
@@ -23,10 +23,11 @@ int taiHookFunctionImport(tai_hook_ref_t *ref_out, SceUID pid, const char *libra
 int taiHookRelease(SceUID hook_uid, tai_hook_ref_t ref);
 
 static const char *g_legacy_ea_ips[] = {
-    "159.153.",     
-    "159.253.",     
-    "20.50.",       
-    NULL            
+    "44.234.175.",  /* CRITICAL: Your discovered EA AWS server prefix */
+    "159.153.",     /* Main EA global server block */
+    "159.253.",     /* Secondary EA infrastructure block */
+    "20.50.",       /* Legacy EA Origin endpoints */
+    NULL            /* Sentinel */
 };
 
 static tai_hook_ref_t g_hook_ref;
