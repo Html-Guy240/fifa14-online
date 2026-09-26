@@ -6,11 +6,11 @@ include("${VITASDK}/share/vita.cmake" REQUIRED)
 
 set(VITA_MODULE_NAME "fifa14_redirect")
 
-# 1. Correctly formatted SCEDEF structure schema for vita-libs-gen
+# 1. Correctly formatted SCEDEF structure schema for vita-libs-gen (User Mode)
 set(TAIHEN_STUB_SCEDEF "
 modules:
   taihen:
-    attributes: 0
+    libname: taihen
     version: 1
     nid: 0x48151623
     functions:
