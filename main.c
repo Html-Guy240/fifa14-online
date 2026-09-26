@@ -1,7 +1,7 @@
 /*
  * FIFA 14 PS Vita - Legacy Server Redirect Plugin
  * =================================================
- * Verified for FW 3.65 / VitaSDK
+ * Verified for FW 3.65 / VitaSDK + GCC 15 Compatibility
  */
 
 #include <psp2/kernel/modulemgr.h>
@@ -63,6 +63,26 @@ static int is_legacy_ea_ip(const char *ip_str) {
     return 0;
 }
 
+/* 
+ * GCC 15 Safe Wrapper: Explicitly replicates TAI_CONTINUE but tells the 
+ * compiler the exact function signature parameters to prevent argument mismatch crashes.
+ */
+static int tai_continue_sceNetConnect(tai_hook_ref_t ref, int s, SceNetSockaddr *addr, unsigned int addrlen) {
+    struct tai_hook_layout {
+        void *next;
+        void *func;
+        void *old;
+    } *cur = (struct tai_hook_layout *)ref;
+    
+    struct tai_hook_layout *next = (struct tai_hook_layout *)cur->next;
+
+    int (*target_call)(int, SceNetSockaddr *, unsigned int) = 
+        (next == NULL) ? (int (*)(int, SceNetSockaddr *, unsigned int))cur->old 
+                       : (int (*)(int, SceNetSockaddr *, unsigned int))next->func;
+
+    return target_call(s, addr, addrlen);
+}
+
 /* ------------------------------------------------------------------------
  * Hooked function
  * ------------------------------------------------------------------------ */
@@ -89,7 +109,8 @@ static int sceNetConnect_patched(int s, SceNetSockaddr *addr, unsigned int addrl
         }
     }
 
-    return TAI_CONTINUE(int, g_hook_refs[0], s, addr, addrlen);
+    /* Replaced macro call with type-safe function handler */
+    return tai_continue_sceNetConnect(g_hook_refs[0], s, addr, addrlen);
 }
 
 /* ------------------------------------------------------------------------
