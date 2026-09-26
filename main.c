@@ -1,8 +1,8 @@
 /*
  * FIFA 14 PS Vita - Legacy Server Redirect Plugin
  * =================================================
- * Pure C Self-Contained Implementation (No External Headers Needed)
- * Safe for FW 3.65 / GCC 15
+ * Pure C Self-Contained Implementation
+ * Safe for FW 3.65 / GCC 15 + PIC Compliant
  */
 
 #include <psp2/kernel/modulemgr.h>
@@ -20,19 +20,10 @@
 
 /* taiHEN internal types mapped natively to bypass header dependencies */
 typedef void* tai_hook_ref_t;
-#define TAI_MAIN_MODULE ((SceUID)-1)
-#define TAI_ANY_LIBRARY NULL
 
-/* Import the taiHEN registration symbols directly from the system kernel export tables */
-extern SceUID taiHookFunctionImport(
-    tai_hook_ref_t *ref_out,
-    SceUID pid,
-    const char *library_name,
-    unsigned int function_nid,
-    const void *hook_func
-);
-
-extern int taiHookRelease(SceUID hook_uid, tai_hook_ref_t ref);
+/* Define core functional entry point definitions natively */
+int taiHookFunctionImport(tai_hook_ref_t *ref_out, SceUID pid, const char *library_name, unsigned int function_nid, const void *hook_func);
+int taiHookRelease(SceUID hook_uid, tai_hook_ref_t ref);
 
 static const char *g_legacy_ea_ips[] = {
     "159.153.",     /* Main EA global server block (Blaze/Matchmaking) */
@@ -103,10 +94,11 @@ int module_start(SceSize argc, const void *args) {
     (void)argc; (void)args;
     sceClibPrintf("[FIFA14Redirect] Plugin starting...\n");
 
+    /* Intercept connections routed specifically into the main game module (-1) */
     g_hook_uid = taiHookFunctionImport(
         &g_hook_ref,
-        TAI_MAIN_MODULE,      
-        TAI_ANY_LIBRARY,      
+        ((SceUID)-1),      
+        NULL,      
         SCE_NET_CONNECT_NID,
         sceNetConnect_patched
     );
@@ -122,7 +114,6 @@ int module_stop(SceSize argc, const void *args) {
     return SCE_KERNEL_STOP_SUCCESS;
 }
 
-/* Dummy main wrapper to satisfy standalone default linking restrictions */
 int main(void) {
     return 0;
 }
