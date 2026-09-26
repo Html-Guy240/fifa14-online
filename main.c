@@ -1,8 +1,6 @@
 /*
  * FIFA 14 PS Vita - Legacy Server Redirect Plugin
- * =================================================
- * Pure C Self-Contained Implementation
- * Safe for FW 3.65 / GCC 15 Native Toolchain
+ * Pure C Self-Contained Implementation - GCC 15 Safe
  */
 
 #include <psp2/kernel/modulemgr.h>
@@ -18,23 +16,21 @@
 #define PROXY_PORT 9000
 #define SCE_NET_CONNECT_NID 0x7A4C6262
 
-/* taiHEN structures declared locally to avoid header dependency blocks */
 typedef void* tai_hook_ref_t;
 
 int taiHookFunctionImport(tai_hook_ref_t *ref_out, SceUID pid, const char *library_name, unsigned int function_nid, const void *hook_func);
 int taiHookRelease(SceUID hook_uid, tai_hook_ref_t ref);
 
 static const char *g_legacy_ea_ips[] = {
-    "159.153.",     /* Main EA global server block (Blaze/Matchmaking) */
-    "159.253.",     /* Secondary EA infrastructure block */
-    "20.50.",       /* Legacy EA Origin / Account authentication services */
-    NULL            /* Sentinel */
+    "159.153.",     
+    "159.253.",     
+    "20.50.",       
+    NULL            
 };
 
 static tai_hook_ref_t g_hook_ref;
 static SceUID g_hook_uid;
 
-/* Module registration footprint definitions required by the system kernel layout */
 unsigned int vita_log_mask = 0xFFFFFFFF;
 int _newlib_heap_size_user = 1024 * 1024;
 
@@ -48,10 +44,6 @@ static int is_legacy_ea_ip(const char *ip_str) {
     return 0;
 }
 
-/* 
- * GCC 15 Safe Wrapper: Explicitly replicates the continue structure,
- * providing the exact parameter maps to prevent function format warnings.
- */
 static int tai_continue_sceNetConnect(tai_hook_ref_t ref, int s, SceNetSockaddr *addr, unsigned int addrlen) {
     struct tai_hook_layout {
         void *next;
@@ -68,7 +60,6 @@ static int tai_continue_sceNetConnect(tai_hook_ref_t ref, int s, SceNetSockaddr 
     return target_call(s, addr, addrlen);
 }
 
-/* Hook patch function matching exact sceNetConnect signature */
 static int sceNetConnect_patched(int s, SceNetSockaddr *addr, unsigned int addrlen) {
     if (addr != NULL && addr->sa_family == SCE_NET_AF_INET) {
         SceNetSockaddrIn *addr_in = (SceNetSockaddrIn *)addr;
@@ -97,7 +88,6 @@ int module_start(SceSize argc, const void *args) {
     (void)argc; (void)args;
     sceClibPrintf("[FIFA14Redirect] Plugin starting...\n");
 
-    /* Target the game's core binary container mapping slot (-1) */
     g_hook_uid = taiHookFunctionImport(
         &g_hook_ref,
         ((SceUID)-1),      
@@ -117,7 +107,6 @@ int module_stop(SceSize argc, const void *args) {
     return SCE_KERNEL_STOP_SUCCESS;
 }
 
-/* Fix: Dummy main entry point to satisfy standalone compiler linkage checks */
 int main(void) {
     return 0;
 }
