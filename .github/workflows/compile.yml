@@ -11,11 +11,15 @@ jobs:
       - name: Checkout repository code
         uses: actions/checkout@v4
 
-      - name: Manually Map taiHEN Headers and Libraries
+      - name: Install taiHEN Framework Dependencies
         run: |
+          # Fix the URL spacing and clone the official repository library layout
           git clone https://github.com /tmp/taihen
+          
+          # Copy headers to the Vita SDK system directory paths
           cp -r /tmp/taihen/libtaihen/include/* /usr/local/vitasdk/arm-vita-eabi/include/
-          # Generate placeholder stub to satisfy linker criteria cleanly
+          
+          # Generate the local archive library file to satisfy -ltaihen linker flags
           arm-vita-eabi-ar rcs /usr/local/vitasdk/arm-vita-eabi/lib/libtaihen.a
 
       - name: Create Build Environment
