@@ -165,3 +165,7 @@ int module_stop(SceSize argc, const void *args) {
 
     return SCE_KERNEL_STOP_SUCCESS;
 }
+/* Dummy main wrapper to satisfy standalone linker configurations */
+int main(void) {
+    return 0;
+}
