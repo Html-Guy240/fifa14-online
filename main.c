@@ -12,7 +12,8 @@
 #include <string.h>
 #include <stdio.h>
 
-#define PROXY_IP   "192.168.1.102"
+/* AMENDED: Your PC's current static LAN IP address */
+#define PROXY_IP   "192.168.1.7"
 #define PROXY_PORT 9000
 #define SCE_NET_CONNECT_NID 0x7A4C6262
 
@@ -110,3 +111,5 @@ int module_stop(SceSize argc, const void *args) {
 int main(void) {
     return 0;
 }
+
+void _start(unsigned int args, void *argp) __attribute__((weak, alias("module_start")));
