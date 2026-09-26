@@ -144,3 +144,8 @@ int module_stop(SceSize argc, const void *args) {
 
     return SCE_KERNEL_STOP_SUCCESS;
 }
+
+/* Dummy main function to satisfy basic compiler toolchain entry-point requirements */
+int main(void) {
+    return 0;
+}
