@@ -3,7 +3,6 @@ project(fifa14_redirect_plugin)
 
 include("${VITASDK}/share/vita.cmake" REQUIRED)
 
-# Force the compiler to use standard runtime flags suitable for a PRX plugin module
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wl,-q -O2 -Wall")
 
 add_executable(${PROJECT_NAME} main.c)
