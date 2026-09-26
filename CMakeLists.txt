@@ -6,16 +6,12 @@ include("${VITASDK}/share/vita.cmake" REQUIRED)
 
 set(VITA_MODULE_NAME "fifa14_redirect")
 
-# 1. Correctly formatted SCEDEF structure schema for vita-libs-gen (User Mode)
+# 1. Stripped, bare-bones YAML schema layout for vita-libs-gen
 set(TAIHEN_STUB_SCEDEF "
-modules:
-  taihen:
-    libname: taihen
-    version: 1
-    nid: 0x48151623
-    functions:
-      taiHookFunctionImport: 0x5D3AA146
-      taiHookRelease: 0x44AC3691
+taihen:
+  functions:
+    taiHookFunctionImport: 0x5D3AA146
+    taiHookRelease: 0x44AC3691
 ")
 file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/taihen_stub.yaml "${TAIHEN_STUB_SCEDEF}")
 
@@ -26,7 +22,7 @@ add_custom_command(
     DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/taihen_stub.yaml
 )
 
-# 3. Create a clean, formal static library target out of the generated stub file
+# 3. Create a static library target out of the generated stub file
 add_library(taihen_stub STATIC IMPORTED GLOBAL)
 set_target_properties(taihen_stub PROPERTIES IMPORTED_LOCATION ${CMAKE_CURRENT_BINARY_DIR}/libtaihen_stub.a)
 
