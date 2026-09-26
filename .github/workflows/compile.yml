@@ -11,6 +11,11 @@ jobs:
       - name: Checkout repository code
         uses: actions/checkout@v4
 
+      - name: Install taiHEN Dependency
+        run: |
+          # Use the Vita Dependency Package Manager to install taihen
+          vdpm taihen
+
       - name: Create Build Environment
         run: |
           mkdir build
@@ -22,5 +27,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: fifa14_redirect_suprx
-          # Using a wildcard (*) ensures it grabs the .suprx no matter what it is named
           path: build/*.suprx
