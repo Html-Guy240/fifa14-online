@@ -1,7 +1,7 @@
 /*
  * FIFA 14 PS Vita - Legacy Server Redirect Plugin
  * =================================================
- * Verified for FW 3.65 / VitaSDK
+ * Verified for FW 3.65 / VitaSDK + GCC 15 Compatibility
  */
 
 #include <psp2/kernel/modulemgr.h>
@@ -52,6 +52,27 @@ static int is_legacy_ea_ip(const char *ip_str) {
     return 0;
 }
 
+/* 
+ * GCC 15 Strict Bypass: Type-safe clone of TAI_CONTINUE for sceNetConnect.
+ * Avoids macro argument expansion errors.
+ */
+static int custom_continue_net_connect(tai_hook_ref_t ref, int s, SceNetSockaddr *addr, unsigned int addrlen) {
+    struct _tai_hook_user_layout {
+        void *next;
+        void *func;
+        void *old;
+    } *cur, *next;
+
+    cur = (struct _tai_hook_user_layout *)ref;
+    next = (struct _tai_hook_user_layout *)cur->next;
+
+    int (*target_call)(int, SceNetSockaddr *, unsigned int) = 
+        (next == NULL) ? (int (*)(int, SceNetSockaddr *, unsigned int))cur->old 
+                       : (int (*)(int, SceNetSockaddr *, unsigned int))next->func;
+
+    return target_call(s, addr, addrlen);
+}
+
 /* ------------------------------------------------------------------------
  * Hooked function
  * ------------------------------------------------------------------------ */
@@ -78,8 +99,7 @@ static int sceNetConnect_patched(int s, SceNetSockaddr *addr, unsigned int addrl
         }
     }
 
-    /* Use explicit typecasting within the macro to resolve compiler architecture confusion */
-    return TAI_CONTINUE(int, g_hook_refs[0], s, addr, addrlen);
+    return custom_continue_net_connect(g_hook_refs[0], s, addr, addrlen);
 }
 
 /* ------------------------------------------------------------------------
