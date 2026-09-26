@@ -1,18 +1,21 @@
 cmake_minimum_required(VERSION 3.5)
 project(fifa14_redirect_plugin)
 
-# Essential Vita SDK environment macros
+# Pull in the official toolchain helper properties
 include("${VITASDK}/share/vita.cmake" REQUIRED)
 
 set(VITA_MODULE_NAME "fifa14_redirect")
 
+# Define the build as an executable layout to satisfy toolchain packing steps
 add_executable(${PROJECT_NAME} main.c)
 
-# Force the linker to build a PRX layout instead of a regular app binary
+# Explicitly pass PRX flags to override standard app binary structures
 set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS "-shared -nodefaultlibs")
 
-target_link_libraries(${PROJECT_NAME} taihen SceNet_stub SceNetCtl_stub)
+# Link using standard system networking stubs
+target_link_libraries(${PROJECT_NAME} SceNet_stub SceNetCtl_stub)
 
+# Generate the PRX structures 
 vita_create_self(${PROJECT_NAME}.unsigned.suprx ${PROJECT_NAME} UNSIGN_PRX)
 
 add_custom_command(
