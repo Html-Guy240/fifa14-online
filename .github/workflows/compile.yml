@@ -1,0 +1,25 @@
+name: Build Vita Plugin
+
+on: [push, workflow_dispatch]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container: vitasdk/vitasdk:latest
+
+    steps:
+      - name: Checkout repository code
+        uses: actions/checkout@v4
+
+      - name: Create Build Environment
+        run: |
+          mkdir build
+          cd build
+          cmake -DCMAKE_TOOLCHAIN_FILE=${VITASDK}/share/vita.toolchain.cmake ..
+          make
+
+      - name: Upload Finished Plugin Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: fifa14_redirect_suprx
+          path: build/fifa14_redirect.suprx
