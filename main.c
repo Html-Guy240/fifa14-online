@@ -25,7 +25,7 @@
 #define PROXY_PORT 9000
 
 /*
- * AMENDMENT 1: Verified legacy EA server IP prefixes.
+ * Legacy EA server IP prefixes.
  * Intercepts all traffic routed to EA's global infrastructure blocks.
  */
 static const char *g_legacy_ea_ips[] = {
@@ -42,7 +42,7 @@ static const char *g_legacy_ea_ips[] = {
 #define HOOKS_NUM 1
 
 /*
- * AMENDMENT 2: Verified NID for sceNetConnect on standard 3.65 VitaSDK builds.
+ * Verified NID for sceNetConnect on standard 3.65 VitaSDK builds.
  */
 #define SCE_NET_CONNECT_NID 0x7A4C6262
 
