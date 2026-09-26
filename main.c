@@ -1,7 +1,7 @@
 /*
  * FIFA 14 PS Vita - Legacy Server Redirect Plugin
  * =================================================
- * Verified for FW 3.65 / VitaSDK + GCC 15 Compatibility
+ * Pure C Implementation - GCC 15 Safe & Stable
  */
 
 #include <psp2/kernel/modulemgr.h>
@@ -14,33 +14,23 @@
 #include <string.h>
 #include <stdio.h>
 
-/* ------------------------------------------------------------------------
- * Configuration
- * ------------------------------------------------------------------------ */
-
 #define PROXY_IP   "192.168.1.102"
 #define PROXY_PORT 9000
-
-static const char *g_legacy_ea_ips[] = {
-    "159.153.",     /* Main EA global server block */
-    "159.253.",     /* Secondary EA infrastructure block */
-    "20.50.",       /* Legacy EA Origin endpoints */
-    NULL            /* Sentinel */
-};
-
-/* ------------------------------------------------------------------------
- * Hook bookkeeping
- * ------------------------------------------------------------------------ */
-
-#define HOOKS_NUM 1
 #define SCE_NET_CONNECT_NID 0x7A4C6262
 
-static tai_hook_ref_t g_hook_refs[HOOKS_NUM];
-static SceUID g_hook_uids[HOOKS_NUM];
+static const char *g_legacy_ea_ips[] = {
+    "159.153.",     
+    "159.253.",     
+    "20.50.",       
+    NULL            
+};
 
-/* ------------------------------------------------------------------------
- * Helpers
- * ------------------------------------------------------------------------ */
+static tai_hook_ref_t g_hook_ref;
+static SceUID g_hook_uid;
+
+/* Module information required by the toolchain to produce valid user modules */
+unsigned int vita_log_mask = 0xFFFFFFFF;
+int _newlib_heap_size_user = 1024 * 1024;
 
 static int is_legacy_ea_ip(const char *ip_str) {
     for (int i = 0; g_legacy_ea_ips[i] != NULL; i++) {
@@ -52,101 +42,58 @@ static int is_legacy_ea_ip(const char *ip_str) {
     return 0;
 }
 
-/* 
- * GCC 15 Strict Bypass: Type-safe clone of TAI_CONTINUE for sceNetConnect.
- * Avoids macro argument expansion errors.
- */
-static int custom_continue_net_connect(tai_hook_ref_t ref, int s, SceNetSockaddr *addr, unsigned int addrlen) {
-    struct _tai_hook_user_layout {
-        void *next;
-        void *func;
-        void *old;
-    } *cur, *next;
-
-    cur = (struct _tai_hook_user_layout *)ref;
-    next = (struct _tai_hook_user_layout *)cur->next;
-
-    int (*target_call)(int, SceNetSockaddr *, unsigned int) = 
-        (next == NULL) ? (int (*)(int, SceNetSockaddr *, unsigned int))cur->old 
-                       : (int (*)(int, SceNetSockaddr *, unsigned int))next->func;
-
-    return target_call(s, addr, addrlen);
-}
-
-/* ------------------------------------------------------------------------
- * Hooked function
- * ------------------------------------------------------------------------ */
-
+/* Patch function matching exact sceNetConnect signature */
 static int sceNetConnect_patched(int s, SceNetSockaddr *addr, unsigned int addrlen) {
     if (addr != NULL && addr->sa_family == SCE_NET_AF_INET) {
         SceNetSockaddrIn *addr_in = (SceNetSockaddrIn *)addr;
-
-        char ip_str[46];
+        char ip_str[46]; // Fixed syntax: converted single char to string buffer
+        
         sceNetInetNtop(SCE_NET_AF_INET, &addr_in->sin_addr, ip_str, sizeof(ip_str));
-
         unsigned short dst_port = sceNetHtons(addr_in->sin_port);
         sceClibPrintf("[FIFA14Redirect] connect() -> %s:%u\n", ip_str, dst_port);
 
         if (is_legacy_ea_ip(ip_str)) {
-            sceClibPrintf("[FIFA14Redirect] Legacy EA host detected (%s) - redirecting to proxy %s:%u\n",
-                          ip_str, PROXY_IP, (unsigned)PROXY_PORT);
-
+            sceClibPrintf("[FIFA14Redirect] Redirecting to proxy %s:%u\n", PROXY_IP, (unsigned)PROXY_PORT);
             SceNetInAddr proxy_addr;
             sceNetInetPton(SCE_NET_AF_INET, PROXY_IP, &proxy_addr);
-
             addr_in->sin_addr = proxy_addr;
             addr_in->sin_port = sceNetHtons(PROXY_PORT);
         }
     }
 
-    return custom_continue_net_connect(g_hook_refs[0], s, addr, addrlen);
+    /* Bypassing the broken TAI_CONTINUE macro with a clean typecast function pointer */
+    struct tai_hook_layout {
+        void *next;
+        void *func;
+        void *old;
+    } *cur = (struct tai_hook_layout *)g_hook_ref;
+
+    int (*real_connect)(int, SceNetSockaddr *, unsigned int) = 
+        (cur->next == NULL) ? (int (*)(int, SceNetSockaddr *, unsigned int))cur->old 
+                            : (int (*)(int, SceNetSockaddr *, unsigned int))((struct tai_hook_layout *)cur->next)->func;
+
+    return real_connect(s, addr, addrlen);
 }
 
-/* ------------------------------------------------------------------------
- * Hook install / teardown
- * ------------------------------------------------------------------------ */
+int module_start(SceSize argc, const void *args) {
+    (void)argc; (void)args;
+    sceClibPrintf("[FIFA14Redirect] Starting...\n");
 
-static void install_hooks(void) {
-    g_hook_uids[0] = taiHookFunctionImport(
-        &g_hook_refs[0],
+    g_hook_uid = taiHookFunctionImport(
+        &g_hook_ref,
         TAI_MAIN_MODULE,      
         TAI_ANY_LIBRARY,      
         SCE_NET_CONNECT_NID,
         sceNetConnect_patched
     );
 
-    if (g_hook_uids[0] < 0) {
-        sceClibPrintf("[FIFA14Redirect] Failed to hook sceNetConnect (0x%08X)\n", g_hook_uids[0]);
-    } else {
-        sceClibPrintf("[FIFA14Redirect] sceNetConnect hooked successfully.\n");
-    }
-}
-
-static void remove_hooks(void) {
-    for (int i = 0; i < HOOKS_NUM; i++) {
-        if (g_hook_uids[i] >= 0) {
-            taiHookRelease(g_hook_uids[i], g_hook_refs[i]);
-        }
-    }
-}
-
-/* ------------------------------------------------------------------------
- * Module entry points
- * ------------------------------------------------------------------------ */
-
-int module_start(SceSize argc, const void *args) {
-    (void)argc;
-    (void)args;
-
-    sceClibPrintf("[FIFA14Redirect] Plugin starting...\n");
-    install_hooks();
     return SCE_KERNEL_START_SUCCESS;
 }
 
 int module_stop(SceSize argc, const void *args) {
-    (void)argc;
-    (void)args;
-
-    remove_hooks();
+    (void)argc; (void)args;
+    if (g_hook_uid >= 0) {
+        taiHookRelease(g_hook_uid, g_hook_ref);
+    }
     return SCE_KERNEL_STOP_SUCCESS;
 }
