@@ -11,12 +11,6 @@ jobs:
       - name: Checkout repository code
         uses: actions/checkout@v4
 
-      - name: Install taiHEN Framework Dependencies
-        run: |
-          git clone https://github.com /tmp/taihen
-          cp -r /tmp/taihen/libtaihen/include/* /usr/local/vitasdk/arm-vita-eabi/include/
-          arm-vita-eabi-ar rcs /usr/local/vitasdk/arm-vita-eabi/lib/libtaihen.a
-
       - name: Create Build Environment
         run: |
           mkdir build
@@ -24,6 +18,7 @@ jobs:
           cmake -DCMAKE_TOOLCHAIN_FILE=${VITASDK}/share/vita.toolchain.cmake ..
           make
 
+      # THIS STEP IS ADDED TO EXTRACT AND DELIVER THE SUPRX FILE TO YOU
       - name: Upload Finished Plugin Artifact
         uses: actions/upload-artifact@v4
         with:
