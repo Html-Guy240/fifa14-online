@@ -11,6 +11,17 @@ jobs:
       - name: Checkout repository code
         uses: actions/checkout@v4
 
+      - name: Inject taiHEN Headers and Libraries
+        run: |
+          # Clone the official taiHEN repository into a temporary folder
+          git clone https://github.com /tmp/taihen
+          
+          # Copy the API headers into the Vita SDK header directory
+          cp -r /tmp/taihen/libtaihen/include/* /usr/local/vitasdk/arm-vita-eabi/include/
+          
+          # Copy the pre-built toolchain library stubs so the linker can find -ltaihen
+          cp /tmp/taihen/libtaihen/libtaihen_stub.a /usr/local/vitasdk/arm-vita-eabi/lib/libtaihen.a
+
       - name: Create Build Environment
         run: |
           mkdir build
