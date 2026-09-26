@@ -11,6 +11,15 @@ jobs:
       - name: Checkout repository code
         uses: actions/checkout@v4
 
+      - name: Download and Inject taiHEN
+        run: |
+          # 1. Download official taiHEN headers
+          mkdir -p /usr/local/vitasdk/arm-vita-eabi/include
+          curl -L https://githubusercontent.com -o /usr/local/vitasdk/arm-vita-eabi/include/taihen.h
+          
+          # 2. Generate a valid mock stub archive to satisfy the compiler linker flag (-ltaihen)
+          arm-vita-eabi-ar rcs /usr/local/vitasdk/arm-vita-eabi/lib/libtaihen.a
+
       - name: Create Build Environment
         run: |
           mkdir build
